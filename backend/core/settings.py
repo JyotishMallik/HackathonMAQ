@@ -122,7 +122,9 @@ SIMPLE_JWT = {
 # CORS settings
 # In your Django settings.py
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # React dev server
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    # React dev server
 ]
 CORS_ALLOW_CREDENTIALS = True
 
