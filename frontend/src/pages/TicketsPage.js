@@ -5,7 +5,6 @@ import {
   Typography,
   Button,
   Box,
-  CircularProgress,
   Alert
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
@@ -16,7 +15,7 @@ import { fetchTickets, createTicket } from '../store/ticketSlice';
 const TicketsPage = () => {
   const dispatch = useDispatch();
   const { data: tickets, loading, error } = useSelector(state => state.tickets.list);
-  const { loading: operationLoading, error: operationError, success } = useSelector(state => state.tickets.operation);
+  const { loading: operationLoading, success } = useSelector(state => state.tickets.operation);
   const [dialogOpen, setDialogOpen] = useState(false);
   
   useEffect(() => {

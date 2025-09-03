@@ -16,7 +16,6 @@ import {
   IconButton,
   Divider,
   Tooltip,
-  Badge,
   useTheme,
   useMediaQuery
 } from '@mui/material';

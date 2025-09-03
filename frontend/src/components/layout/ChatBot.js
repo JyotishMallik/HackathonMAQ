@@ -16,6 +16,8 @@ import {
     Badge,
     InputAdornment,
     CircularProgress,
+    Chip,
+    Rating,
 } from '@mui/material';
 import {
     Chat as ChatIcon,
@@ -222,23 +224,6 @@ const ChatBot = () => {
         }
     };
 
-    // Handle code analysis
-    const handleCodeAnalysis = async (code, language, type) => {
-        try {
-            let response;
-            if (type === 'security') {
-                response = await chatbotService.analyzeCode(code, language);
-            } else {
-                response = await chatbotService.checkCodeQuality(code, language);
-            }
-            
-            return response;
-        } catch (error) {
-            console.error("Error analyzing code:", error);
-            throw new Error("Failed to analyze code");
-        }
-    };
-
     // Focus the input field when opening the chat
     useEffect(() => {
         if (open && !minimized) {
@@ -266,7 +251,7 @@ const ChatBot = () => {
                 }]);
             }, 1000);
         }
-    }, []);
+    }, [chatHistory.length]);
 
     const formatTime = (date) => {
         return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -274,8 +259,8 @@ const ChatBot = () => {
 
     // Render message content based on type
     const renderMessageContent = (chat) => {
-        // Handle code snippets
-        if (chat.type === 'code') {
+        // Handle code analysis
+        if (chat.type === 'code' || chat.type === 'code_analysis') {
             return (
                 <Box sx={{ 
                     fontFamily: 'monospace', 
@@ -289,29 +274,214 @@ const ChatBot = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                         <CodeIcon fontSize="small" sx={{ mr: 0.5 }} />
                         <Typography variant="caption" sx={{ color: '#9cdcfe' }}>
-                            {chat.data?.language || 'Code'}
+                            {chat.data?.language || 'Code'} - {chat.data?.analysis_type || 'Analysis'}
                         </Typography>
                     </Box>
                     {chat.text}
+                    {chat.data?.issues && (
+                        <Box sx={{ mt: 2 }}>
+                            <Typography variant="caption" sx={{ color: '#9cdcfe', display: 'block', mb: 1 }}>
+                                Issues Found:
+                            </Typography>
+                            <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                                {chat.data.issues.map((issue, i) => (
+                                    <li key={i} style={{ marginBottom: '4px' }}>
+                                        <Typography variant="body2" sx={{ color: '#d4d4d4' }}>
+                                            {issue}
+                                        </Typography>
+                                    </li>
+                                ))}
+                            </ul>
+                        </Box>
+                    )}
                 </Box>
             );
         }
         
-        // Handle vulnerability reports
-        if (chat.type === 'vulnerability') {
+        // Handle security vulnerabilities
+        if (chat.type === 'security') {
             return (
                 <Box>
                     <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#f44336' }}>
                         Security Issues Found:
                     </Typography>
                     <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
-                        {chat.data?.issues.map((issue, i) => (
+                        {chat.data?.issues?.map((issue, i) => (
                             <li key={i}>
                                 <Typography variant="body2">{issue}</Typography>
                             </li>
                         ))}
                     </ul>
                     <Typography variant="body2">{chat.text}</Typography>
+                </Box>
+            );
+        }
+        
+        // Handle support tickets
+        if (chat.type === 'ticket') {
+            return (
+                <Box>
+                    <Typography variant="subtitle2" sx={{ mb: 1, color: '#1a237e' }}>
+                        Support Ticket Details:
+                    </Typography>
+                    <Box sx={{ backgroundColor: 'rgba(25, 118, 210, 0.08)', p: 1.5, borderRadius: 1 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            Summary: {chat.data?.summary}
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
+                            <Chip 
+                                size="small" 
+                                label={chat.data?.category || 'Other'} 
+                                sx={{ backgroundColor: 'rgba(25, 118, 210, 0.2)' }} 
+                            />
+                            <Chip 
+                                size="small" 
+                                label={`Priority: ${chat.data?.urgency || 'Medium'}`}
+                                color={
+                                    chat.data?.urgency === 'Critical' ? 'error' :
+                                    chat.data?.urgency === 'High' ? 'warning' :
+                                    'default'
+                                }
+                            />
+                            <Chip 
+                                size="small" 
+                                label={`Impact: ${chat.data?.impact || 'Individual'}`}
+                                sx={{ backgroundColor: 'rgba(25, 118, 210, 0.2)' }}
+                            />
+                        </Box>
+                    </Box>
+                    <Typography variant="body2" sx={{ mt: 1 }}>{chat.text}</Typography>
+                </Box>
+            );
+        }
+        
+        // Handle inventory queries
+        if (chat.type === 'inventory') {
+            return (
+                <Box>
+                    <Typography variant="subtitle2" sx={{ mb: 1, color: '#1a237e' }}>
+                        Inventory Status:
+                    </Typography>
+                    <Box sx={{ backgroundColor: 'rgba(25, 118, 210, 0.08)', p: 1.5, borderRadius: 1 }}>
+                        {chat.data?.item_name && (
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                Item: {chat.data.item_name}
+                            </Typography>
+                        )}
+                        <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
+                            {chat.data?.status && (
+                                <Chip 
+                                    size="small" 
+                                    label={chat.data.status}
+                                    color={
+                                        chat.data.status === 'Out of Stock' ? 'error' :
+                                        chat.data.status === 'Low Stock' ? 'warning' :
+                                        'success'
+                                    }
+                                />
+                            )}
+                            {chat.data?.quantity && (
+                                <Chip 
+                                    size="small" 
+                                    label={`Quantity: ${chat.data.quantity}`}
+                                    sx={{ backgroundColor: 'rgba(25, 118, 210, 0.2)' }}
+                                />
+                            )}
+                            {chat.data?.action_needed && chat.data.action_needed !== 'None' && (
+                                <Chip 
+                                    size="small" 
+                                    label={`Action: ${chat.data.action_needed}`}
+                                    color="warning"
+                                />
+                            )}
+                        </Box>
+                    </Box>
+                    <Typography variant="body2" sx={{ mt: 1 }}>{chat.text}</Typography>
+                </Box>
+            );
+        }
+        
+        // Handle product related messages
+        if (chat.type === 'product') {
+            return (
+                <Box>
+                    {chat.data?.products ? (
+                        <>
+                            <Typography variant="subtitle2" sx={{ mb: 1, color: '#1a237e' }}>
+                                Product Information:
+                            </Typography>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                {chat.data.products.map((product, i) => (
+                                    <Box 
+                                        key={i} 
+                                        sx={{ 
+                                            backgroundColor: 'rgba(25, 118, 210, 0.08)', 
+                                            p: 1.5, 
+                                            borderRadius: 1 
+                                        }}
+                                    >
+                                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                            {product.name}
+                                        </Typography>
+                                        {product.price && (
+                                            <Typography variant="body2" color="primary">
+                                                Price: ${product.price}
+                                            </Typography>
+                                        )}
+                                        {product.rating && (
+                                            <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                                                <Rating value={product.rating} readOnly size="small" />
+                                                <Typography variant="caption" sx={{ ml: 1 }}>
+                                                    ({product.rating})
+                                                </Typography>
+                                            </Box>
+                                        )}
+                                    </Box>
+                                ))}
+                            </Box>
+                        </>
+                    ) : null}
+                    <Typography variant="body2" sx={{ mt: 1 }}>{chat.text}</Typography>
+                </Box>
+            );
+        }
+        
+        // Handle FAQ responses
+        if (chat.type === 'faq') {
+            return (
+                <Box>
+                    {chat.data?.category && (
+                        <Chip 
+                            size="small" 
+                            label={chat.data.category}
+                            sx={{ 
+                                backgroundColor: 'rgba(25, 118, 210, 0.2)',
+                                mb: 1
+                            }}
+                        />
+                    )}
+                    <Typography variant="body2">
+                        {chat.text}
+                    </Typography>
+                    {chat.data?.related_articles && (
+                        <Box sx={{ mt: 1 }}>
+                            <Typography variant="caption" sx={{ color: '#666', display: 'block' }}>
+                                Related Articles:
+                            </Typography>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                                {chat.data.related_articles.map((article, i) => (
+                                    <Chip
+                                        key={i}
+                                        label={article}
+                                        size="small"
+                                        variant="outlined"
+                                        sx={{ fontSize: '0.75rem' }}
+                                        onClick={() => {/* Handle article click */}}
+                                    />
+                                ))}
+                            </Box>
+                        </Box>
+                    )}
                 </Box>
             );
         }

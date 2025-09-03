@@ -24,6 +24,7 @@ class ChatMessage(models.Model):
     message_type = models.CharField(max_length=20, choices=MESSAGE_TYPES, default='text')
     path = models.CharField(max_length=255, null=True, blank=True)  # Store the path user was on
     created_at = models.DateTimeField(auto_now_add=True)
+    metadata = models.JSONField(null=True, blank=True)  # Store additional message data
     
     class Meta:
         ordering = ['created_at']

@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   Container,
   Typography,
-  Box,
   Alert,
   Snackbar,
 } from '@mui/material';
@@ -14,7 +13,7 @@ import { fetchProducts, createInventoryRecord } from '../store/inventorySlice';
 const InventoryPage = () => {
   const dispatch = useDispatch();
   const { data: products, loading, error } = useSelector(state => state.inventory.products);
-  const { loading: operationLoading, error: operationError, success } = useSelector(state => state.inventory.operation);
+  const { error: operationError, success } = useSelector(state => state.inventory.operation);
   
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
